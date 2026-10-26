@@ -3,19 +3,53 @@
 These are my apps for the GitHub Universe 2026 badge (Badger 2350). Each folder
 under `apps/` is one app.
 
-![Space Pinball running on the badge](screenshots/space_pinball.png)
-
 ## Apps
 
-| App | What it does |
-| --- | --- |
-| [Space Pinball](apps/space_pinball) | Lean the badge to roll the ball around a space pinball table, inspired by 3D Pinball: Space Cadet. |
-| [3D Maze](apps/maze3d) | Walk through a red brick labyrinth by tilting and turning the badge. |
-| [Ski Tilt](apps/ski_tilt) | Tilt the badge to steer a skier downhill, SkiFree-style. |
-| [Bouncing Logo](apps/bouncing_logo) | A handle bounces around the screen like the classic DVD screensaver. |
-| [Windows Pipes](apps/windows_pipes) | Glossy 3D pipes grow behind my floating name, like the Windows 3D Pipes screensaver. |
-| [GitGotchi](apps/gitgotchi) | Hatch and raise Mona, a rubber duck, the ship-it squirrel, or Copilot as a virtual pet. |
-| [Mona Gives](apps/mona_gives) | Meet open source maintainers, open their GitHub Sponsors page by QR code, and pass the heart to another badge. |
+<table>
+<tr>
+<td width="50%" valign="top">
+<a href="apps/space_pinball"><img src="screenshots/space_pinball.png" alt="Space Pinball running on the badge" width="320"></a><br>
+<b><a href="apps/space_pinball">Space Pinball</a></b><br>
+Lean the badge to roll the ball around a space pinball table, inspired by 3D Pinball: Space Cadet.
+</td>
+<td width="50%" valign="top">
+<a href="apps/windows_pipes"><img src="screenshots/windows_pipes.png" alt="Windows Pipes running on the badge" width="320"></a><br>
+<b><a href="apps/windows_pipes">Windows Pipes</a></b><br>
+Glossy 3D pipes grow behind my floating name, like the Windows 3D Pipes screensaver.
+</td>
+</tr>
+<tr>
+<td width="50%" valign="top">
+<a href="apps/maze3d"><img src="screenshots/maze3d.png" alt="3D Maze running on the badge" width="320"></a><br>
+<b><a href="apps/maze3d">3D Maze</a></b><br>
+Walk through a red brick labyrinth by tilting and turning the badge.
+</td>
+<td width="50%" valign="top">
+<a href="apps/ski_tilt"><img src="screenshots/ski_tilt.png" alt="Ski Tilt running on the badge" width="320"></a><br>
+<b><a href="apps/ski_tilt">Ski Tilt</a></b><br>
+Tilt the badge to steer a skier downhill, SkiFree-style.
+</td>
+</tr>
+<tr>
+<td width="50%" valign="top">
+<a href="apps/bouncing_logo"><img src="screenshots/bouncing_logo.png" alt="Bouncing Logo running on the badge" width="320"></a><br>
+<b><a href="apps/bouncing_logo">Bouncing Logo</a></b><br>
+A handle bounces around the screen like the classic DVD screensaver.
+</td>
+<td width="50%" valign="top">
+<a href="apps/gitgotchi"><img src="screenshots/gitgotchi.png" alt="GitGotchi running on the badge" width="320"></a><br>
+<b><a href="apps/gitgotchi">GitGotchi</a></b><br>
+Hatch and raise Mona, a rubber duck, the ship-it squirrel, or Copilot as a virtual pet.
+</td>
+</tr>
+<tr>
+<td width="50%" valign="top">
+<a href="apps/mona_gives"><img src="screenshots/mona_gives.png" alt="Mona Gives running on the badge" width="320"></a><br>
+<b><a href="apps/mona_gives">Mona Gives</a></b><br>
+Meet open source maintainers, open their GitHub Sponsors page by QR code, and pass the heart to another badge.
+</td>
+</tr>
+</table>
 
 Each app's README lists its controls.
 
