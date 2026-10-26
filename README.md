@@ -13,6 +13,8 @@ under `apps/` is one app.
 | [3D Maze](apps/maze3d) | Walk through a red brick labyrinth by tilting and turning the badge. |
 | [Ski Tilt](apps/ski_tilt) | Tilt the badge to steer a skier downhill, SkiFree-style. |
 | [Bouncing Logo](apps/bouncing_logo) | A handle bounces around the screen like the classic DVD screensaver. |
+| [Windows Pipes](apps/windows_pipes) | Glossy 3D pipes grow behind my floating name, like the Windows 3D Pipes screensaver. |
+| [GitGotchi](apps/gitgotchi) | Hatch and raise Mona, a rubber duck, the ship-it squirrel, or Copilot as a virtual pet. |
 
 Each app's README lists its controls.
 
@@ -29,8 +31,9 @@ These apps need the October 2026 badge firmware. They use the badge's built-in
 
 ## Credits
 
-I wrote all the code and drew all the art in code. The apps borrow ideas from
-classic games and screensavers, but they include no graphics, sounds, or code
-from them.
+I wrote all the code and drew most of the art in code. GitGotchi's Mona and
+squirrel sprites come from [badger/home](https://github.com/badger/home) under
+the MIT License. The apps borrow ideas from classic games and screensavers, but
+they include no graphics, sounds, or code from them.
 
 Made for the [GitHub Universe badge](https://github.com/badger/home).
