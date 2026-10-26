@@ -28,9 +28,9 @@ def sheet(kind):
     return _sheets[kind]
 
 
-def keep_only(kind):
+def keep_only(kind, guest=None):
     for name in list(_sheets):
-        if name != kind:
+        if name not in (kind, guest):
             del _sheets[name]
     gc.collect()
 

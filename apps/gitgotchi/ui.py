@@ -178,6 +178,47 @@ def food(kind, x, y, left):
         screen.shape(shape.circle(x + 1 * s, y - 9 * s, 1))
 
 
+def wave(x, y, side, t):
+    """A white cartoon glove waving from a shoulder at (x, y). `side` is -1 or 1."""
+    angle = -math.pi / 2 + side * (0.45 + 0.4 * math.sin(t / 110))
+    hx = x + math.cos(angle) * 9
+    hy = y + math.sin(angle) * 9
+    screen.pen = INK
+    screen.shape(shape.line(x, y, hx, hy, 2))
+    screen.shape(shape.circle(hx, hy, 3.6))
+    screen.pen = WHITE
+    screen.shape(shape.circle(hx, hy, 2.6))
+
+
+def puff(x, y, progress):
+    """Dust clouds that spread out and fade as `progress` goes 0..1."""
+    if not 0 <= progress < 1:
+        return
+    screen.pen = color.rgb(255, 255, 255, int(200 * (1 - progress)))
+    for side in (-1, 1):
+        screen.shape(shape.circle(x + side * (6 + progress * 14), y - 2 - progress * 3, 2 + progress * 3))
+
+
+def burst(x, y, progress):
+    """A star burst for a high five."""
+    if not 0 <= progress < 1:
+        return
+    pen = color.rgb(255, 214, 60, int(255 * (1 - progress)))
+    star(x, y, 4 + progress * 4, pen)
+    for i in range(6):
+        a = i * math.pi / 3
+        r = 6 + progress * 14
+        star(x + math.cos(a) * r, y + math.sin(a) * r, 2.5, pen)
+
+
+def note(x, y, pen):
+    """A small music note."""
+    screen.pen = pen
+    screen.shape(shape.ellipse(x, y, 2.4, 1.8))
+    screen.shape(shape.line(x + 2, y, x + 2, y - 7, 1))
+    screen.shape(shape.line(x + 2, y - 7, x + 5, y - 5, 1))
+
+
 def panel(x, y, w, h):
     pill(x + 2, y + 2, w, h, color.rgb(0, 0, 0, 60))
     pill(x, y, w, h, color.rgb(255, 255, 255, 245))
