@@ -15,6 +15,7 @@ under `apps/` is one app.
 | [Bouncing Logo](apps/bouncing_logo) | A handle bounces around the screen like the classic DVD screensaver. |
 | [Windows Pipes](apps/windows_pipes) | Glossy 3D pipes grow behind my floating name, like the Windows 3D Pipes screensaver. |
 | [GitGotchi](apps/gitgotchi) | Hatch and raise Mona, a rubber duck, the ship-it squirrel, or Copilot as a virtual pet. |
+| [Mona Gives](apps/mona_gives) | Meet open source maintainers, open their GitHub Sponsors page by QR code, and pass the heart to another badge. |
 
 Each app's README lists its controls.
 
@@ -31,9 +32,10 @@ These apps need the October 2026 badge firmware. They use the badge's built-in
 
 ## Credits
 
-I wrote all the code and drew most of the art in code. GitGotchi's Mona and
-squirrel sprites come from [badger/home](https://github.com/badger/home) under
-the MIT License. The apps borrow ideas from classic games and screensavers, but
+I wrote all the code and drew most of the art in code. GitGotchi and Mona Gives
+use Mona and squirrel sprites from [badger/home](https://github.com/badger/home)
+under the MIT License, and Mona Gives shows maintainers' public GitHub avatars.
+The apps borrow ideas from classic games and screensavers, but
 they include no graphics, sounds, or code from them.
 
 Made for the [GitHub Universe badge](https://github.com/badger/home).

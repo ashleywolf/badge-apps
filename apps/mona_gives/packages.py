@@ -1,0 +1,60 @@
+# Packages maintained by the curated maintainers in maintainers.py, keyed by
+# "<ecosystem>:<package>" as they appear in GitHub dependency graph purls.
+# Lets the on-badge scan match dependencies in any ecosystem without a token.
+# Every login here must also be in CURATED (tests check this).
+
+PACKAGES = {
+    # npm
+    "npm:vue": "yyx990803",
+    "npm:vite": "yyx990803",
+    "npm:pinia": "posva",
+    "npm:vue-router": "posva",
+    "npm:unocss": "antfu",
+    "npm:nuxt": "danielroe",
+    "npm:nitropack": "pi0",
+    "npm:h3": "pi0",
+    "npm:unbuild": "pi0",
+    "npm:fastify": "mcollina",
+    "npm:pino": "mcollina",
+    "npm:undici": "mcollina",
+    "npm:@tanstack/react-query": "tannerlinsley",
+    "npm:@tanstack/vue-query": "tannerlinsley",
+    "npm:@tanstack/query-core": "tannerlinsley",
+    "npm:@tanstack/react-table": "tannerlinsley",
+    "npm:alpinejs": "calebporzio",
+    "npm:postcss": "ai",
+    "npm:autoprefixer": "ai",
+    "npm:nanoid": "ai",
+    "npm:browserslist": "ai",
+    "npm:tsx": "privatenumber",
+    "npm:pkgroll": "privatenumber",
+    # PyPI (names normalised: lower case, "_" and "." become "-")
+    "pypi:fastapi": "tiangolo",
+    "pypi:typer": "tiangolo",
+    "pypi:sqlmodel": "tiangolo",
+    "pypi:pydantic": "samuelcolvin",
+    "pypi:rich": "willmcgugan",
+    "pypi:textual": "willmcgugan",
+    "pypi:structlog": "hynek",
+    "pypi:attrs": "hynek",
+    "pypi:datasette": "simonw",
+    "pypi:sqlite-utils": "simonw",
+    "pypi:llm": "simonw",
+    # crates.io
+    "cargo:serde": "dtolnay",
+    "cargo:serde_json": "dtolnay",
+    "cargo:anyhow": "dtolnay",
+    "cargo:thiserror": "dtolnay",
+    "cargo:syn": "dtolnay",
+    "cargo:regex": "BurntSushi",
+    "cargo:memchr": "BurntSushi",
+    "cargo:walkdir": "BurntSushi",
+    "cargo:csv": "BurntSushi",
+    # Packagist
+    "composer:phpunit/phpunit": "sebastianbergmann",
+    "composer:monolog/monolog": "Seldaek",
+    "composer:composer/composer": "Seldaek",
+    "composer:pestphp/pest": "nunomaduro",
+    "composer:nunomaduro/collision": "nunomaduro",
+    "composer:livewire/livewire": "calebporzio",
+}
