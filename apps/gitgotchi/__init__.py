@@ -13,9 +13,29 @@ from badgeware import State
 
 import pets
 import ui
+import visit
 from catch import Catch
+from party import Party, HOST_X
+
+try:
+    from badgeware import link as badgelink
+except ImportError:
+    badgelink = None
+
+try:
+    import secrets
+except ImportError:
+    secrets = None
 
 SAVE_KEY = "gitgotchi"
+FRIENDS_KEY = "gitgotchi_friends"
+GAME = "gitgotchi"
+FRIENDS_MAX = 20
+VISIT_MS = 5 * 60 * 1000            # a visit lasts while the badges stay linked, up to 5 minutes
+VISIT_FUN = 20
+ACT_FUN = 3
+ACT_FUN_CAP = 15
+PRETEND_SYNC_MS = 1500
 
 # How fast things change, per second of real time.
 HUNGER_RATE = 100 / (3 * 3600)      # full to empty in about 3 hours
@@ -71,6 +91,10 @@ game = None
 hatch_start = 0
 save_at = 0
 lights_level = -1
+party = None
+party_fun = 0
+party_wish = None
+friends = []
 
 
 def now():
@@ -218,6 +242,287 @@ def needs_help():
         return pet["sick"] or pet["hunger"] < 15
     return (pet["sick"] or pet["bugs"] >= 2 or pet["hunger"] < 25
             or pet["happy"] < 25 or pet["energy"] < 20)
+
+
+def stage():
+    if pet["age"] < 20 * 60:
+        return 0
+    return 1 if pet["age"] < 4 * 3600 else 2
+
+
+# -------------------------------------------------------------------- visits
+
+def own_login():
+    login = str(getattr(secrets, "GITHUB_USERNAME", "") or "").strip().lstrip("@")
+    return login if visit.valid_login(login) else ""
+
+
+def badge_id(value):
+    if isinstance(value, (bytes, bytearray)):
+        return "".join("%02x" % b for b in value)
+    return str(value)
+
+
+def clean_name(value):
+    value = str(value or "")
+    return "".join(ch for ch in value if " " <= ch <= "~").strip()[:16]
+
+
+class Radio:
+    """Bluetooth badge-to-badge link with a PetLink meeting on top.
+
+    In the simulator, which can't pair badges, UP on the home screen brings a
+    pretend friend over instead.
+    """
+
+    def __init__(self):
+        self.link = None
+        self.proximity = None
+        self.simulator = badgelink is not None and not hasattr(badgelink, "NEAR_RSSI")
+        if badgelink is not None and not self.simulator:
+            try:
+                self.link = badgelink.Link(GAME)
+                self.proximity = badgelink.Proximity(self.link)
+            except Exception as error:
+                print("gitgotchi: no badge link:", error)
+                self.link = None
+        self.was_linked = False
+        self.meeting = None
+        self.partner_id = ""
+        self.partner_name = ""
+        self.pretend_at = None
+        self.events = []
+
+    @property
+    def central(self):
+        return bool(getattr(self.link, "central", True)) if self.link else True
+
+    def pretend(self, now):
+        if self.simulator and self.pretend_at is None and self.meeting is None:
+            self.pretend_at = now
+
+    def update(self, now, listening):
+        if self.pretend_at is not None:
+            if self.meeting is None and now - self.pretend_at >= PRETEND_SYNC_MS:
+                self.meeting = True
+                self.partner_id = ""
+                self.partner_name = "Pretend pal"
+                kind = random.choice([k for k in pets.ORDER if k != pet["pet"]])
+                self.events.append(("hello", {"kind": kind, "stage": 2, "flags": 0, "login": ""}))
+            return
+        if self.link is None:
+            return
+        link = self.link
+        link.pump()
+        linked = link.linked
+        if linked and not self.was_linked:
+            partner = link.partner
+            if listening and partner is not None:
+                self.partner_id = badge_id(partner.id)
+                self.partner_name = clean_name(getattr(partner, "name", ""))
+                hello = visit.encode_hello(pet["pet"], stage(), visit.SICK if pet["sick"] else 0, own_login())
+                self.meeting = visit.Meeting(hello, now, random.getrandbits(8))
+            else:
+                link.leave()
+                linked = False
+        elif self.was_linked and not linked:
+            if self.meeting is not None:
+                self.meeting = None
+                self.events.append(("lost",))
+            self.proximity.clear()
+        self.was_linked = linked
+
+        meeting = self.meeting
+        if linked and meeting is not None:
+            for message in link.receive():
+                self.events.extend(meeting.receive(message, link.send))
+            meeting.pump(link.send, now, link.capacity())
+            if meeting.expired(now):
+                self.leave(now)
+                self.events.append(("lost",))
+        elif listening and not linked:
+            self.proximity.update(now)
+        link.update()
+
+    def take_events(self):
+        events = self.events
+        self.events = []
+        return events
+
+    def act(self, activity, seed):
+        if isinstance(self.meeting, visit.Meeting):
+            self.meeting.act(self.link.send, activity, seed)
+
+    def bye(self):
+        if isinstance(self.meeting, visit.Meeting):
+            self.meeting.say_bye(self.link.send)
+            self.meeting.pump(self.link.send, badge.ticks, self.link.capacity())
+
+    def leave(self, now):
+        self.meeting = None
+        self.pretend_at = None
+        if self.link is not None and self.link.linked:
+            partner = self.link.partner
+            self.proximity.rest(partner.id if partner else None, now)
+            self.link.leave()
+        self.was_linked = False
+
+    def status(self, now):
+        """("syncing", progress), ("hello", 0) or (None, 0)."""
+        if self.pretend_at is not None and self.meeting is None:
+            return "syncing", min(1.0, (now - self.pretend_at) / PRETEND_SYNC_MS)
+        if self.meeting is not None:
+            return "hello", 0.0
+        if self.proximity is not None and self.proximity.syncing() is not None:
+            return "syncing", self.proximity.progress(now)
+        return None, 0.0
+
+    def lights(self, now):
+        if self.proximity is None or self.meeting is not None:
+            return None
+        return self.proximity.lights(now)
+
+    def close(self):
+        if self.link is not None:
+            try:
+                self.link.close()
+            except Exception:
+                pass
+
+
+def load_friends():
+    saved = {"friends": []}
+    try:
+        State.load(FRIENDS_KEY, saved)
+    except (OSError, ValueError):
+        pass
+    found = saved.get("friends")
+    if not isinstance(found, list):
+        return
+    for item in found[-FRIENDS_MAX:]:
+        if (isinstance(item, list) and len(item) == 4 and isinstance(item[0], str)
+                and item[1] in pets.INFO and isinstance(item[2], str) and isinstance(item[3], int)):
+            friends.append(item)
+
+
+def remember_friend(friend_id, kind, owner):
+    for item in friends:
+        if item[0] == friend_id:
+            item[1] = kind
+            item[2] = owner
+            item[3] += 1
+            friends.remove(item)
+            friends.append(item)
+            break
+    else:
+        friends.append([friend_id, kind, owner, 1])
+        del friends[:-FRIENDS_MAX]
+    State.save(FRIENDS_KEY, {"friends": friends})
+
+
+def start_visit(friend):
+    """The other badge said hello: their pet jumps over."""
+    global mode, party, party_fun, party_wish
+    if mode not in ("home", "feed", "stats") or pet["asleep"] or pet["pet"] not in pets.INFO:
+        radio.leave(badge.ticks)
+        return
+    if friend["login"]:
+        owner = "@" + friend["login"]
+    else:
+        owner = radio.partner_name or "A friend"
+    pets.keep_only(pet["pet"], friend["kind"])
+    party = Party(pet["pet"], stage(), friend["kind"], friend["stage"], owner,
+                  badge.ticks, radio.central, pet_x)
+    party_fun = 0
+    party_wish = None
+    mode = "visit"
+    pet["happy"] = clamp(pet["happy"] + VISIT_FUN)
+    pet["energy"] = clamp(pet["energy"] - 5)
+    if radio.partner_id:
+        remember_friend(radio.partner_id, friend["kind"], owner)
+    save()
+
+
+def do_activity(activity, seed=None, send=True):
+    global party_fun
+    if seed is None:
+        seed = random.getrandbits(8)
+    if party.start(activity, seed, badge.ticks, send):
+        if send:
+            radio.act(activity, seed)
+        if party_fun < ACT_FUN_CAP:
+            party_fun += ACT_FUN
+            pet["happy"] = clamp(pet["happy"] + ACT_FUN)
+
+
+def end_visit(said_bye=False):
+    if party is not None and party.phase != "bye":
+        if said_bye:
+            radio.bye()
+        party.leave(badge.ticks)
+
+
+def radio_update():
+    listening = mode == "home" and not pet["asleep"] and pet["pet"] in pets.INFO
+    radio.update(badge.ticks, listening)
+    for event in radio.take_events():
+        if event[0] == "hello":
+            start_visit(event[1])
+        elif party is None:
+            if event[0] == "lost" and mode == "home":
+                say("They wandered off")
+        elif event[0] == "act":
+            do_activity(event[1], event[2], send=False)
+        else:
+            end_visit()
+
+
+def visit_update():
+    global mode, party, pet_x, target_x, party_wish
+    now = badge.ticks
+    simulate(badge.ticks_delta / 1000)
+    if mode == "gone":
+        radio.leave(now)
+        party = None
+        return
+    if party.phase == "together":
+        if badge.pressed(BUTTON_BACK) or pet["asleep"] or now - party.together_at >= VISIT_MS:
+            end_visit(said_bye=True)
+        else:
+            # Remember a press made mid-activity so it runs next.
+            if badge.pressed(BUTTON_SELECT):
+                party_wish = "high5"
+            elif badge.pressed(BUTTON_UP):
+                party_wish = "dance"
+            elif badge.pressed(BUTTON_DOWN):
+                party_wish = "snack"
+            elif badge.pressed(BUTTON_LEFT) or badge.pressed(BUTTON_RIGHT):
+                party_wish = "wave"
+            if party.ready(now):
+                choice = party_wish or party.auto(now)
+                party_wish = None
+                if choice:
+                    do_activity(choice)
+    party.update(now)
+    if party.done:
+        label = party.label
+        party = None
+        radio.leave(now)
+        pets.keep_only(pet["pet"])
+        pet_x = target_x = HOST_X
+        mode = "home"
+        say("Bye, %s!" % label, 2200)
+        save()
+        draw_home()
+        return
+
+    ui.room(pet["pet"], not pet["lights"])
+    party.draw(now, not pet["lights"])
+    ui.meters(pet["hunger"], pet["happy"], pet["energy"])
+    party.draw_bar(now)
+    party.draw_toast(now)
+    if badge.ticks > save_at:
+        save()
 
 
 # ------------------------------------------------------------------ actions
@@ -393,6 +698,8 @@ def home_update():
     if badge.pressed(BUTTON_MENU):
         mode = "confirm"
         return
+    if badge.pressed(BUTTON_UP) and radio.simulator:
+        radio.pretend(badge.ticks)
 
     simulate(badge.ticks_delta / 1000)
     if mode != "home":
@@ -470,7 +777,14 @@ def draw_home():
     ui.action_bar(selected)
     if mode in ("stats", "confirm", "feed"):
         return
-    if t < message_until:
+    state, progress = radio.status(t) if mode == "home" else (None, 0)
+    if state == "syncing":
+        ui.toast("Someone's nearby...")
+        ui.pill(50, 33, 60, 4, color.rgb(0, 0, 0, 60))
+        ui.pill(50, 33, max(4, 60 * progress), 4, color.rgb(250, 90, 140))
+    elif state == "hello":
+        ui.toast("Saying hi...")
+    elif t < message_until:
         ui.toast(message)
     elif t < label_until:
         ui.toast(ui.LABELS[ui.ACTIONS[selected]])
@@ -523,16 +837,17 @@ def stats_update():
         mode = "home"
     simulate(badge.ticks_delta / 1000)
     draw_home()
-    ui.panel(16, 18, 128, 84)
-    stage = "Baby" if pet["age"] < 20 * 60 else "Kid" if pet["age"] < 4 * 3600 else "Grown-up"
-    ui.text(name(), 80, 21, face=font.sins, centre=True)
-    ui.text("%s, %s" % (stage, age_text()), 80, 36, color.rgb(110, 100, 150), centre=True)
-    hearts("Food", pet["hunger"], 50)
-    hearts("Fun", pet["happy"], 62)
-    hearts("Energy", pet["energy"], 74)
+    ui.panel(16, 14, 128, 92)
+    grown = ("Baby", "Kid", "Grown-up")[stage()]
+    ui.text(name(), 80, 17, face=font.sins, centre=True)
+    ui.text("%s, %s" % (grown, age_text()), 80, 32, color.rgb(110, 100, 150), centre=True)
+    hearts("Food", pet["hunger"], 46)
+    hearts("Fun", pet["happy"], 58)
+    hearts("Energy", pet["energy"], 70)
     health = "Sick" if pet["sick"] else "Healthy"
-    ui.text("Weight %d  %s" % (pet["weight"], health), 80, 88,
+    ui.text("Weight %d  %s" % (pet["weight"], health), 80, 83,
             color.rgb(110, 100, 150), centre=True)
+    ui.text("Friends met: %d" % len(friends), 80, 94, color.rgb(110, 100, 150), centre=True)
 
 
 def confirm_update():
@@ -595,13 +910,24 @@ SCREENS = {
     "confirm": confirm_update,
     "game": game_update,
     "gone": gone_update,
+    "visit": visit_update,
 }
 
 
 def caselights():
     global lights_level
     level = 0
-    if mode == "home" and needs_help():
+    lights = radio.lights(badge.ticks) if mode == "home" else None
+    if lights is not None:
+        lights_level = -1
+        try:
+            badge.caselights(*lights)
+        except (AttributeError, OSError, TypeError):
+            pass
+        return
+    if mode == "visit":
+        level = round(0.15 + 0.1 * (math.sin(badge.ticks / 250) + 1), 2)
+    elif mode == "home" and needs_help():
         level = round(0.1 + 0.25 * (math.sin(badge.ticks / 300) + 1), 2)
     if level != lights_level:
         lights_level = level
@@ -612,11 +938,16 @@ def caselights():
 
 
 def update():
+    radio_update()
     SCREENS[mode]()
     caselights()
 
 
 def on_exit():
+    if party is not None:
+        radio.bye()
+    radio.leave(badge.ticks)
+    radio.close()
     if pet["pet"] in pets.INFO:
         save()
     try:
@@ -625,5 +956,7 @@ def on_exit():
         pass
 
 
+radio = Radio()
+load_friends()
 load()
 run(update)

@@ -39,7 +39,7 @@ A handle bounces around the screen like the classic DVD screensaver.
 <td width="50%" valign="top">
 <a href="apps/gitgotchi"><img src="screenshots/gitgotchi.png" alt="GitGotchi running on the badge" width="320"></a><br>
 <b><a href="apps/gitgotchi">GitGotchi</a></b><br>
-Hatch and raise Mona, a rubber duck, the ship-it squirrel, or Copilot as a virtual pet.
+Hatch and raise Mona, a rubber duck, the ship-it squirrel, or Copilot as a virtual pet. Hold badges back to back and your pets jump over to visit, wave, and play together.
 </td>
 </tr>
 <tr>
