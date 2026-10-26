@@ -48,6 +48,11 @@ Hatch and raise Mona, a rubber duck, the ship-it squirrel, or Copilot as a virtu
 <b><a href="apps/mona_gives">Mona Gives</a></b><br>
 Meet open source maintainers, open their GitHub Sponsors page by QR code, and pass the heart to another badge.
 </td>
+<td width="50%" valign="top">
+<a href="apps/win95_savers"><img src="screenshots/win95_savers.png" alt="Win95 Savers running on the badge" width="320"></a><br>
+<b><a href="apps/win95_savers">Win95 Savers</a></b><br>
+Windows 95 screensavers with a GitHub twist: the Solitaire win cascade, Flying Octocats, and Mystify.
+</td>
 </tr>
 </table>
 
